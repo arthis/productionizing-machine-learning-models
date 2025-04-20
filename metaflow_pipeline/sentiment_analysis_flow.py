@@ -12,6 +12,7 @@ import os
 import uuid
 import json
 import datetime
+import pickle
 
 class SentimentAnalysisFlow(FlowSpec):
     s3_bucket = Parameter("s3_bucket", help="S3 bucket to store the model")
@@ -22,6 +23,7 @@ class SentimentAnalysisFlow(FlowSpec):
         dataset = load_dataset("imdb")  # Using IMDb as a proxy for book reviews
         self.raw_data = dataset['train'].shuffle(seed=42).select(range(2000))  # Limit for faster training
         self.test_data = dataset['test'].shuffle(seed=42).select(range(500))
+        self.version_id = datetime.datetime.utcnow().strftime("%Y%m%d-%H%M%S")
         self.next(self.prepare_data)
 
     @step
@@ -39,6 +41,26 @@ class SentimentAnalysisFlow(FlowSpec):
         self.y_val = y_val
         self.X_test = self.vectorizer.transform([x['text'] for x in self.test_data])
         self.y_test = [x['label'] for x in self.test_data]
+
+        s3 = boto3.client('s3')
+        version_folder = f"models/{self.version_id}"
+
+        self.vectorizer_path = "vectorizer.pkl"
+        pickle.dump(self.vectorizer, open(self.vectorizer_path, "wb"))
+        s3.upload_file(
+            self.vectorizer_path,
+            self.s3_bucket,
+            f"{version_folder}/{self.vectorizer_path}",
+        )
+
+        self.idf_path = "idf.pkl"
+        pickle.dump(self.vectorizer.idf_, open(self.idf_path, "wb"))
+        s3.upload_file(
+            self.idf_path,
+            self.s3_bucket,
+            f"{version_folder}/{self.idf_path}",
+        )
+
         self.next(self.train)
 
     @step
@@ -46,6 +68,14 @@ class SentimentAnalysisFlow(FlowSpec):
         print("Training model...")
         self.model = LogisticRegression(max_iter=1000)
         self.model.fit(self.X_train, self.y_train)
+
+        self.model_path = "model.joblib"
+        joblib.dump(self.model, self.model_path)
+
+        s3 = boto3.client('s3')
+        version_folder = f"models/{self.version_id}"
+        s3.upload_file(self.model_path, self.s3_bucket, f"{version_folder}/{self.model_path}")
+
         self.next(self.validate)
 
     @step
@@ -63,18 +93,8 @@ class SentimentAnalysisFlow(FlowSpec):
         plt.xlabel("Predicted")
         plt.ylabel("Actual")
 
-        # Generate version ID
-        self.version_id = datetime.datetime.utcnow().strftime("%Y%m%d-%H%M%S")
-
-        # File names
-        self.model_path = "model.joblib"
-        self.vectorizer_path = "vectorizer.joblib"
         self.metrics_path = "metrics.json"
         self.confusion_path = "confusion_matrix.png"
-
-        # Save artifacts
-        joblib.dump(self.model, self.model_path)
-        joblib.dump(self.vectorizer, self.vectorizer_path)
 
         metrics = {
             "accuracy": accuracy_score(self.y_val, y_pred),
@@ -89,10 +109,11 @@ class SentimentAnalysisFlow(FlowSpec):
     @step
     def push(self):
         print("Uploading model and artifacts to S3...")
+
         s3 = boto3.client('s3')
         version_folder = f"models/{self.version_id}"
 
-        for fname in [self.model_path, self.vectorizer_path, self.metrics_path, self.confusion_path]:
+        for fname in [self.metrics_path, self.confusion_path]:
             s3.upload_file(fname, self.s3_bucket, f"{version_folder}/{fname}")
 
         self.model_url = f"https://{self.s3_bucket}.s3.amazonaws.com/{version_folder}/{self.model_path}"
