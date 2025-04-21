@@ -2,8 +2,8 @@
 
 1. [Create an AWS account](console.aws.amazon.com)
 2. [Make an S3 bucket](https://s3.console.aws.amazon.com/s3/)
-3. Put the bucket name in the  .env file
-4. Put the bucket's REGION in start_docker.sh
+3. Put the bucket name in the .env file
+4. Put the bucket's REGION in .env
 5. Create an IAM User:
 
 ### 🔐 Step-by-Step: Create a New IAM User with S3 Access
@@ -35,7 +35,7 @@
      - **Secret access key**
    - 📥 **Download the CSV** or copy them somewhere safe — you won’t see the secret again later.
 
-8. **Put the access key ID and secret access key into the appropriate env vars in start_docker.sh.**
+8. **Put the access key ID and secret access key into the appropriate env vars in the .env file.**
 
 ## Okay, time to run the repo!
 
