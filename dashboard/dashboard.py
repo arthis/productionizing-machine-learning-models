@@ -4,6 +4,7 @@ import joblib
 import json
 import os
 import tempfile
+import pickle
 import matplotlib.pyplot as plt
 from botocore.exceptions import ClientError
 
@@ -37,11 +38,26 @@ def download_file_from_s3(version: str, filename: str):
         return None
 
 def load_model_set(version):
-    model = joblib.load(download_file_from_s3(version, "model.joblib"))
-    vectorizer = joblib.load(download_file_from_s3(version, "vectorizer.joblib"))
-    with open(download_file_from_s3(version, "metrics.json")) as f:
-        metrics = json.load(f)
+    model_path = download_file_from_s3(version, "model.joblib")
+    vec_path = download_file_from_s3(version, "vectorizer.pkl")
+    idf_path = download_file_from_s3(version, "idf.pkl")
+    metrics_path = download_file_from_s3(version, "metrics.json")
     matrix_path = download_file_from_s3(version, "confusion_matrix.png")
+
+    if not all([model_path, vec_path, idf_path, metrics_path]):
+        st.error("One or more model files could not be downloaded from S3.")
+        st.stop()
+
+    model = joblib.load(model_path)
+    with open(vec_path, "rb") as f:
+        vectorizer = pickle.load(f)
+    with open(idf_path, "rb") as f:
+        idf = pickle.load(f)
+    vectorizer.idf_ = idf
+
+    with open(metrics_path) as f:
+        metrics = json.load(f)
+
     return model, vectorizer, metrics, matrix_path
 
 # --- UI: Select Versions ---
