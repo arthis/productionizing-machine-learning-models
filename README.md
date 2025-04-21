@@ -83,7 +83,7 @@ docker exec -it metaflow-pipeline bash
 Then run the Metaflow flow:
 
 ```
-python sentiment_analysis_flow.py run --s3-bucket $S3_BUCKET
+python sentiment_analysis_flow.py run --s3_bucket $S3_BUCKET
 ```
 
 ✅ Make sure your .env file contains a valid S3 bucket name:
