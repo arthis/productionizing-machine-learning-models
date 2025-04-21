@@ -2,7 +2,7 @@
 
 1. [Create an AWS account](console.aws.amazon.com)
 2. [Make an S3 bucket](https://s3.console.aws.amazon.com/s3/)
-3. Put the bucket name in the command at the bottom of the Dockerfile
+3. Put the bucket name in the  .env file
 4. Put the bucket's REGION in start_docker.sh
 5. Create an IAM User:
 
