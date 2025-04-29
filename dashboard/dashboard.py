@@ -101,15 +101,21 @@ with conf_col2:
         st.image(cm_b, caption=f"Confusion Matrix B - {version_b}")
 
 # --- Example Errors ---
-st.subheader("📉 Example Errors")
+st.subheader("💥 Example Errors")
 err_col1, err_col2 = st.columns(2)
 with err_col1:
     if err_a:
-        st.markdown(f"#### False Positive Examples: {err_a['false_positives']}")
+        st.markdown(f"#### False Positive Examples:")
+        st.table(data=err_a['false_positives'][0:min(10, len(err_a['false_positives']))])
+        st.markdown(f"#### False Negative Examples:")
+        st.table(data=err_a['false_negatives'][0:min(10, len(err_a['false_negatives']))])
+
 with err_col2:
     if err_b:
-        st.markdown(f"#### False Positive Examples: {err_b['false_positives']}")
-
+        st.markdown(f"#### False Positive Examples:")
+        st.table(data=err_b['false_positives'][0:min(10, len(err_b['false_positives']))])
+        st.markdown(f"#### False Negative Examples:")
+        st.table(data=err_b['false_negatives'][0:min(10, len(err_b['false_negatives']))])
 
 # --- A/B Prediction ---
 st.subheader("🧪 A/B Prediction Test")
