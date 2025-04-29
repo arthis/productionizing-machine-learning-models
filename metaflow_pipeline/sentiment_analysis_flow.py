@@ -2,7 +2,7 @@ from metaflow import FlowSpec, step, Parameter
 from datasets import load_dataset
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score, f1_score
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -16,6 +16,7 @@ import pickle
 
 class SentimentAnalysisFlow(FlowSpec):
     s3_bucket = Parameter("s3_bucket", help="S3 bucket to store the model")
+    experiment_name = Parameter("experiment_name", help="Short name to identify the experiment you're running")
 
     @step
     def start(self):
@@ -23,7 +24,7 @@ class SentimentAnalysisFlow(FlowSpec):
         dataset = load_dataset("imdb")  # Using IMDb as a proxy for book reviews
         self.raw_data = dataset['train'].shuffle(seed=42).select(range(2000))  # Limit for faster training
         self.test_data = dataset['test'].shuffle(seed=42).select(range(500))
-        self.version_id = datetime.datetime.utcnow().strftime("%Y%m%d-%H%M%S")
+        self.version_id = datetime.datetime.utcnow().strftime("%Y%m%d-%H%M%S") + f"-{self.experiment_name}"
         self.next(self.prepare_data)
 
     @step
@@ -68,7 +69,7 @@ class SentimentAnalysisFlow(FlowSpec):
     @step
     def train(self):
         print("Training model...")
-        self.model = LogisticRegression(max_iter=1000)
+        self.model = RandomForestClassifier()
         self.model.fit(self.X_train, self.y_train)
 
         self.model_path = "model.joblib"
@@ -95,10 +96,15 @@ class SentimentAnalysisFlow(FlowSpec):
         plt.xlabel("Predicted")
         plt.ylabel("Actual")
 
-        errs = {"false_positives": []}
+        errs = {
+            "false_positives": [],
+            "false_negatives": [],
+        }
         for idx, example in enumerate(self.y_val):
-            if self.y_val == 0 and self.y_pred == 1:
+            if self.y_val[idx] == 0 and y_pred[idx] == 1:
                 errs["false_positives"].append(self.X_val_texts[idx])
+            if self.y_val[idx] == 1 and y_pred[idx] == 0:
+                errs["false_negatives"].append(self.X_val_texts[idx])
 
         self.errors_path = "error_examples.json"
         with open(self.errors_path, "w") as f:
