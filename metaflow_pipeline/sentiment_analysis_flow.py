@@ -2,7 +2,7 @@ from metaflow import FlowSpec, step, Parameter
 from datasets import load_dataset
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score, f1_score
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -16,6 +16,7 @@ import pickle
 
 class SentimentAnalysisFlow(FlowSpec):
     s3_bucket = Parameter("s3_bucket", help="S3 bucket to store the model")
+    experiment_name = Parameter("experiment_name", help="Short name to identify the experiment you're running")
 
     @step
     def start(self):
@@ -23,7 +24,7 @@ class SentimentAnalysisFlow(FlowSpec):
         dataset = load_dataset("imdb")  # Using IMDb as a proxy for book reviews
         self.raw_data = dataset['train'].shuffle(seed=42).select(range(2000))  # Limit for faster training
         self.test_data = dataset['test'].shuffle(seed=42).select(range(500))
-        self.version_id = datetime.datetime.utcnow().strftime("%Y%m%d-%H%M%S")
+        self.version_id = datetime.datetime.utcnow().strftime("%Y%m%d-%H%M%S") + f"-{self.experiment_name}"
         self.next(self.prepare_data)
 
     @step
@@ -33,6 +34,8 @@ class SentimentAnalysisFlow(FlowSpec):
         labels = [x['label'] for x in self.raw_data]
 
         X_train, X_val, y_train, y_val = train_test_split(texts, labels, test_size=0.2, random_state=42)
+
+        self.X_val_texts = X_val
 
         self.vectorizer = TfidfVectorizer(max_features=5000, stop_words='english')
         self.X_train = self.vectorizer.fit_transform(X_train)
@@ -66,7 +69,7 @@ class SentimentAnalysisFlow(FlowSpec):
     @step
     def train(self):
         print("Training model...")
-        self.model = LogisticRegression(max_iter=1000)
+        self.model = RandomForestClassifier()
         self.model.fit(self.X_train, self.y_train)
 
         self.model_path = "model.joblib"
@@ -93,6 +96,20 @@ class SentimentAnalysisFlow(FlowSpec):
         plt.xlabel("Predicted")
         plt.ylabel("Actual")
 
+        errs = {
+            "false_positives": [],
+            "false_negatives": [],
+        }
+        for idx, example in enumerate(self.y_val):
+            if self.y_val[idx] == 0 and y_pred[idx] == 1:
+                errs["false_positives"].append(self.X_val_texts[idx])
+            if self.y_val[idx] == 1 and y_pred[idx] == 0:
+                errs["false_negatives"].append(self.X_val_texts[idx])
+
+        self.errors_path = "error_examples.json"
+        with open(self.errors_path, "w") as f:
+            json.dump(errs, f)
+
         self.metrics_path = "metrics.json"
         self.confusion_path = "confusion_matrix.png"
 
@@ -113,7 +130,7 @@ class SentimentAnalysisFlow(FlowSpec):
         s3 = boto3.client('s3')
         version_folder = f"models/{self.version_id}"
 
-        for fname in [self.metrics_path, self.confusion_path]:
+        for fname in [self.metrics_path, self.confusion_path, self.errors_path]:
             s3.upload_file(fname, self.s3_bucket, f"{version_folder}/{fname}")
 
         self.model_url = f"https://{self.s3_bucket}.s3.amazonaws.com/{version_folder}/{self.model_path}"
