@@ -39,3 +39,5 @@ services:
       - "8000:8000"
     env_file:
       - .env
+    volumes:
+      - ./inference:/app     # Mount code into /app inside the container
