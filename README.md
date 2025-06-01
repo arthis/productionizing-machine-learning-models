@@ -111,6 +111,19 @@ You’ll see:
    - ✍️ Text box for testing new reviews
    - 🔮 Sentiment prediction for input
 
+###  Step 5: View the Inference Server
+
+Open your browser and visit:
+
+```
+http://localhost:8000/docs
+```
+
+You’ll see an interactive UI for making test requests to:
+   - /versions: for viewing all the model versions available in your AWS setup
+   - /predict: for inputting a data point for a trained model to make a prediction
+   - /reload-model/{version}: for live reloading the specific model version that the inference server infers without restarting the server
+
 ### 🧹 Optional: Stop all containers
 
 ```
