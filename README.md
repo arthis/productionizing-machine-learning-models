@@ -57,8 +57,7 @@ or for windows:
 
 This will:
    - Download and cache the IMDB dataset locally
-   - Write Dockerfiles for the flow and dashboard
-   - Build the Docker images for both components
+   - Build the Docker images for all components
 
 ### 🧱 Step 2: Start all services
 
