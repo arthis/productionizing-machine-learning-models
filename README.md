@@ -52,6 +52,7 @@ docker compose up -d
 This runs:
    - metaflow-pipeline: a container for running the ML pipeline
    - streamlit-dashboard: the web app at http://localhost:8501
+   - sentiment-inference: the inference server at http://localhost:8000
 
 ### 🧪 Step 2: Train the model
 
