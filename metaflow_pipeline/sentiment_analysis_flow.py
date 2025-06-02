@@ -15,7 +15,7 @@ import datetime
 import pickle
 
 class SentimentAnalysisFlow(FlowSpec):
-    s3_bucket = Parameter("s3_bucket", help="S3 bucket to store the model")
+    s3_bucket = os.getenv("S3_BUCKET")
     experiment_name = Parameter("experiment_name", help="Short name to identify the experiment you're running")
 
     @step

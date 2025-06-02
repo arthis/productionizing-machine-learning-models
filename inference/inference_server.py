@@ -23,17 +23,17 @@ def load_model_from_cloud(version):
     print(f"Inference server currently fetching MODEL VERSION: {version}")
     s3 = boto3.client("s3")
     s3.download_file(
-        "productionizing-ml-models-bucket",
+        s3_bucket,
         f"models/{version}/vectorizer.pkl",
         "downloaded_vectorizer.pkl"
     )
     s3.download_file(
-        "productionizing-ml-models-bucket",
+        s3_bucket,
         f"models/{version}/idf.pkl",
         "downloaded_idf.pkl"
     )
     s3.download_file(
-        "productionizing-ml-models-bucket",
+        s3_bucket,
         f"models/{version}/model.joblib",
         "downloaded_model.joblib"
     )

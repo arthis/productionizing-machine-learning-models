@@ -34,4 +34,4 @@ COPY ../hf_cache /root/.cache/huggingface/datasets
 COPY metaflow_pipeline/ .
 
 # Default command
-CMD ["python", "sentiment_analysis_flow.py", "run", "--s3-bucket", "productionizing-ml-models-bucket"]
+CMD ["python", "sentiment_analysis_flow.py", "run"]

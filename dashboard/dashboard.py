@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from botocore.exceptions import ClientError
 
 # --- CONFIG ---
-S3_BUCKET = "productionizing-ml-models-bucket"
+S3_BUCKET = os.getenv("S3_BUCKET")
 
 st.set_page_config(page_title="📚 Sentiment Model Comparator", layout="wide")
 st.title("📚 Book Review Sentiment Dashboard")
