@@ -41,25 +41,7 @@
 
 ## 🚀 How to Build, Train, and Launch the Dashboard
 
-### 🛠 Step 1: Run the setup script
-
-From the root of the project:
-
-```bash
-./setup_and_build.sh     # for macOS/Linux
-```
-
-or for windows:
-
-```bash
-./setup_and_build.ps1    # for Windows
-```
-
-This will:
-   - Download and cache the IMDB dataset locally
-   - Build the Docker images for all components
-
-### 🧱 Step 2: Start all services
+### 🧱 Step 1: Start all services
 
 From the root of the project:
 
@@ -71,7 +53,7 @@ This runs:
    - metaflow-pipeline: a container for running the ML pipeline
    - streamlit-dashboard: the web app at http://localhost:8501
 
-### 🧪 Step 3: Train the model
+### 🧪 Step 2: Train the model
 
 Open a shell inside the Metaflow container:
 
@@ -97,7 +79,7 @@ This command will:
    - Evaluate the model on validation data
    - Upload metrics, model, vectorizer, and confusion matrix to S3
 
-### 📊 Step 4: View the dashboard
+### 📊 Step 3: View the dashboard
 
 Open your browser and visit:
 
@@ -111,7 +93,7 @@ You’ll see:
    - ✍️ Text box for testing new reviews
    - 🔮 Sentiment prediction for input
 
-###  Step 5: View the Inference Server
+###  Step 4: View the Inference Server
 
 Open your browser and visit:
 
