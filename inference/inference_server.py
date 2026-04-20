@@ -8,7 +8,9 @@ import pickle
 app = FastAPI(title="Book Review Sentiment API")
 app.current_model_version = os.getenv("MODEL_VERSION", "latest")
 
-s3_bucket = os.getenv("S3_BUCKET")
+s3_bucket = os.getenv("S3_BUCKET", "productionizing-ml-models")
+
+
 
 class ReviewInput(BaseModel):
     text: str
